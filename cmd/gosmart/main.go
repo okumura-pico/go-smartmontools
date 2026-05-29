@@ -26,7 +26,7 @@ func main() {
 
 	path := flag.Arg(0)
 	if err := run(path); err != nil {
-		fmt.Fprintf(os.Stderr, "smartctl: %v\n", err)
+		fmt.Fprintf(os.Stderr, "gosmart: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -38,19 +38,14 @@ func usage() {
 }
 
 func run(path string) error {
-	// Try ATA first, then NVMe based on device naming convention.
-	if isNVMe(path) {
+	nvme, err := device.IsNVMe(path)
+	if err != nil {
+		return fmt.Errorf("detect device type: %w", err)
+	}
+	if nvme {
 		return runNVMe(path)
 	}
 	return runATA(path)
-}
-
-func isNVMe(path string) bool {
-	// Heuristic: /dev/nvme* devices are NVMe.
-	if len(path) >= 9 && path[:9] == "/dev/nvme" {
-		return true
-	}
-	return false
 }
 
 func runATA(path string) error {
