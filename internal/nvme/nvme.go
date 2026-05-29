@@ -156,6 +156,50 @@ func ParseErrorLog(data []byte) ([]ErrorLogEntry, error) {
 	return entries, nil
 }
 
+type smartLogField struct {
+	name string
+	get  func(*SmartLog) uint64
+}
+
+var smartLogFields = []smartLogField{
+	{"Critical_Warning", func(s *SmartLog) uint64 { return uint64(s.CriticalWarning) }},
+	{"Temperature", func(s *SmartLog) uint64 { return uint64(s.TemperatureKelvin) }},
+	{"Available_Spare", func(s *SmartLog) uint64 { return uint64(s.AvailableSpare) }},
+	{"Spare_Threshold", func(s *SmartLog) uint64 { return uint64(s.SpareThreshold) }},
+	{"Percentage_Used", func(s *SmartLog) uint64 { return uint64(s.PercentageUsed) }},
+	{"Data_Units_Read", func(s *SmartLog) uint64 { return s.DataUnitsRead }},
+	{"Data_Units_Written", func(s *SmartLog) uint64 { return s.DataUnitsWritten }},
+	{"Host_Reads", func(s *SmartLog) uint64 { return s.HostReads }},
+	{"Host_Writes", func(s *SmartLog) uint64 { return s.HostWrites }},
+	{"Controller_Busy_Time", func(s *SmartLog) uint64 { return s.ControllerBusyTime }},
+	{"Power_Cycles", func(s *SmartLog) uint64 { return s.PowerCycles }},
+	{"Power_On_Hours", func(s *SmartLog) uint64 { return s.PowerOnHours }},
+	{"Unsafe_Shutdowns", func(s *SmartLog) uint64 { return s.UnsafeShutdowns }},
+	{"Media_Errors", func(s *SmartLog) uint64 { return s.MediaErrors }},
+	{"Num_Err_Log_Entries", func(s *SmartLog) uint64 { return s.NumErrLogEntries }},
+	{"Warning_Temp_Time", func(s *SmartLog) uint64 { return uint64(s.WarningTempTime) }},
+	{"Critical_Comp_Time", func(s *SmartLog) uint64 { return uint64(s.CriticalCompTime) }},
+}
+
+// FieldNames returns the names of all SMART/Health log fields.
+func (s *SmartLog) FieldNames() []string {
+	names := make([]string, len(smartLogFields))
+	for i, f := range smartLogFields {
+		names[i] = f.name
+	}
+	return names
+}
+
+// FieldValue returns the raw value of the named SMART log field and whether it was found.
+func (s *SmartLog) FieldValue(name string) (uint64, bool) {
+	for _, f := range smartLogFields {
+		if f.name == name {
+			return f.get(s), true
+		}
+	}
+	return 0, false
+}
+
 // le128lo64 reads a 128-bit little-endian integer and returns the lower 64 bits.
 func le128lo64(b []byte) uint64 {
 	return binary.LittleEndian.Uint64(b[:8])

@@ -285,6 +285,28 @@ func ParseSmartSelectiveSelfTestLog(data []byte) (*SmartSelectiveSelfTestLog, er
 	return sl, nil
 }
 
+// AttrNames returns the names of all present SMART attributes in order.
+func (sv *SmartValues) AttrNames(rpm int) []string {
+	var names []string
+	for _, a := range sv.Attributes {
+		if a.ID != 0 {
+			names = append(names, AttrName(a.ID, rpm))
+		}
+	}
+	return names
+}
+
+// AttrByName returns a pointer to the first attribute whose name matches, or nil.
+func (sv *SmartValues) AttrByName(name string, rpm int) *Attribute {
+	for i := range sv.Attributes {
+		a := &sv.Attributes[i]
+		if a.ID != 0 && AttrName(a.ID, rpm) == name {
+			return a
+		}
+	}
+	return nil
+}
+
 // --- helpers ---
 
 func le16(data []byte, off int) uint16 {

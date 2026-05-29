@@ -20,20 +20,28 @@ Download a pre-built binary from the [Releases](https://github.com/okumura-pico/
 ## Usage
 
 ```
-gosmart [options] <device>
+gosmart [options] <device>              Show all SMART information
+gosmart [options] -l <device>          List available field names
+gosmart [options] <device> <field>     Print raw value of a single field
 
 Options:
+  -l                     List available SMART field names
   -t, --timeout <secs>   Timeout in seconds (default 5, 0 = no limit)
 ```
 
 ### Linux
 
 ```sh
-# ATA/SATA
+# Show all SMART information
 sudo gosmart /dev/sda
-
-# NVMe
 sudo gosmart /dev/nvme0
+
+# List available field names
+sudo gosmart -l /dev/sda
+
+# Get the raw value of a single field
+sudo gosmart /dev/sda Power_On_Hours
+sudo gosmart /dev/nvme0 Temperature
 
 # Disable timeout (e.g. slow/old drive)
 sudo gosmart -t 0 /dev/sda
@@ -42,8 +50,10 @@ sudo gosmart -t 0 /dev/sda
 ### Windows (run as Administrator)
 
 ```powershell
-# ATA/SATA or NVMe — PhysicalDrive number from Disk Management
+# PhysicalDrive number from Disk Management
 gosmart \\.\PhysicalDrive0
+gosmart -l \\.\PhysicalDrive0
+gosmart \\.\PhysicalDrive0 Power_On_Hours
 ```
 
 ## Example output
