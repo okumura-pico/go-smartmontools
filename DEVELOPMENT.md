@@ -46,19 +46,19 @@ mise exec go -- go test -v ./...
 mise exec go -- go test -v ./internal/ata/
 ```
 
-32 tests across 3 packages:
+36 tests across 3 packages:
 
 | Package              | Tests |
 |----------------------|-------|
 | `internal/ata`       | 19    |
-| `internal/nvme`      | 7     |
+| `internal/nvme`      | 8     |
 | `internal/printer`   | 9     |
 
 ## Architecture
 
 ```
 cmd/gosmart/
-  main.go               Entry point, flag parsing, timeout handling
+  main.go               Entry point, flag parsing, timeout handling, all/list/get modes
 
 internal/
   device/
@@ -72,11 +72,13 @@ internal/
     ata.go              Log address constants
     identify.go         ParseIdentify: IDENTIFY DEVICE (512 bytes → IdentifyInfo)
     smart.go            ParseSmartValues, ParseSmartThresholds, ParseSmartErrorLog,
-                        ParseSmartSelfTestLog, ParseSmartSelectiveSelfTestLog
+                        ParseSmartSelfTestLog, ParseSmartSelectiveSelfTestLog;
+                        SmartValues.AttrNames, SmartValues.AttrByName
     attr.go             AttrName: SMART attribute ID → human-readable name
 
   nvme/
-    nvme.go             ParseIdentifyController, ParseSmartLog, ParseErrorLog
+    nvme.go             ParseIdentifyController, ParseSmartLog, ParseErrorLog;
+                        SmartLog.FieldNames, SmartLog.FieldValue
 
   printer/
     ata.go              PrintATAAll: smartctl --all compatible text output for ATA
@@ -86,26 +88,47 @@ internal/
 ### Data flow
 
 ```
-main
- └─ device.IsNVMe(path)
-     ├─ [ATA]  device.OpenATA → ATADevice
-     │           ├─ Identify()              → ata.ParseIdentify      → IdentifyInfo
-     │           ├─ SmartReadData()         → ata.ParseSmartValues   → SmartValues
-     │           ├─ SmartReadThresholds()   → ata.ParseSmartThresholds
-     │           ├─ SmartStatus()                                    → bool
-     │           ├─ SmartReadLog(0x01)      → ata.ParseSmartErrorLog
-     │           ├─ SmartReadLog(0x06)      → ata.ParseSmartSelfTestLog
-     │           └─ SmartReadLog(0x09)      → ata.ParseSmartSelectiveSelfTestLog
-     │                                                 ↓
-     │                                       printer.PrintATAAll
-     │
-     └─ [NVMe] device.OpenNVMe → NVMeDevice
-                 ├─ IdentifyController()    → nvme.ParseIdentifyController → IdentifyController
-                 ├─ GetLogPage(0x02, 512)   → nvme.ParseSmartLog
-                 └─ GetLogPage(0x01, 1024)  → nvme.ParseErrorLog
-                                                       ↓
-                                             printer.PrintNVMeAll
+main (3 modes)
+ │
+ ├─ gosmart <device>              [full output]
+ │   └─ run → runATA / runNVMe → printer.PrintATAAll / PrintNVMeAll
+ │
+ ├─ gosmart -l <device>           [list mode]
+ │   └─ runList → listATA / listNVMe
+ │       ├─ [ATA]  SmartValues.AttrNames(rpm) → one name per line
+ │       └─ [NVMe] SmartLog.FieldNames()      → one name per line
+ │
+ └─ gosmart <device> <field>      [get mode]
+     └─ runGet → getATA / getNVMe
+         ├─ [ATA]  SmartValues.AttrByName(field, rpm) → RawValue48() → uint64
+         └─ [NVMe] SmartLog.FieldValue(field)         → uint64
+
+All three modes share runWithTimeout(fn func() error, timeoutSec int) int.
 ```
+
+### NVMe SMART log fields
+
+The following field names are available for NVMe devices:
+
+| Field name            | Description                        |
+|-----------------------|------------------------------------|
+| `Critical_Warning`    | Critical warning bitmask           |
+| `Temperature`         | Composite temperature (Kelvin raw) |
+| `Available_Spare`     | Available spare capacity (%)       |
+| `Spare_Threshold`     | Spare threshold (%)                |
+| `Percentage_Used`     | Percentage used (%)                |
+| `Data_Units_Read`     | 512-byte units read (×1000)        |
+| `Data_Units_Written`  | 512-byte units written (×1000)     |
+| `Host_Reads`          | Host read commands                 |
+| `Host_Writes`         | Host write commands                |
+| `Controller_Busy_Time`| Controller busy time (minutes)     |
+| `Power_Cycles`        | Power cycles                       |
+| `Power_On_Hours`      | Power-on hours                     |
+| `Unsafe_Shutdowns`    | Unsafe shutdowns                   |
+| `Media_Errors`        | Media and data integrity errors    |
+| `Num_Err_Log_Entries` | Number of error log entries        |
+| `Warning_Temp_Time`   | Warning composite temperature time |
+| `Critical_Comp_Time`  | Critical composite temperature time|
 
 ### Timeout handling
 

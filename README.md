@@ -10,6 +10,8 @@ Supports ATA/SATA and NVMe drives on Linux and Windows.
   thresholds, error log, self-test log, selective self-test log
 - NVMe drives: Identify Controller, SMART/Health log, error information log
 - Output compatible with `smartctl --all` format
+- List available SMART field names (`-l`)
+- Query a single field's raw value for scripting
 - Single static binary, no runtime dependencies
 - Linux and Windows support
 
