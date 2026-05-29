@@ -13,10 +13,14 @@ import (
 	"github.com/okumura-pico/go-smartmontools/internal/printer"
 )
 
+// version is set at build time via -ldflags "-X main.version=vX.Y.Z".
+var version = "dev"
+
 // exitTimeout is the exit code used when the command times out.
 const exitTimeout = 2
 
 func main() {
+	printer.Version = "gosmart " + version
 	timeoutSec := flag.Int("t", 5, "Timeout in seconds (0 = no limit)")
 	flag.IntVar(timeoutSec, "timeout", 5, "Timeout in seconds (0 = no limit)")
 

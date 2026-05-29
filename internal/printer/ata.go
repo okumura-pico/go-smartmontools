@@ -8,7 +8,8 @@ import (
 	"github.com/okumura-pico/go-smartmontools/internal/ata"
 )
 
-const version = "gosmart 0.1"
+// Version is printed in the output header. Set by the caller (typically main).
+var Version = "gosmart (dev)"
 
 // PrintATAAll writes the equivalent of "smartctl --all" output for an ATA device to w.
 func PrintATAAll(w io.Writer, path string, id *ata.IdentifyInfo, sv *ata.SmartValues,
@@ -22,7 +23,7 @@ func PrintATAAll(w io.Writer, path string, id *ata.IdentifyInfo, sv *ata.SmartVa
 }
 
 func printHeader(w io.Writer, path string) {
-	fmt.Fprintf(w, "%s\n", version)
+	fmt.Fprintf(w, "%s\n", Version)
 	fmt.Fprintf(w, "Copyright (C) 2002-26, smartmontools contributors\n\n")
 }
 
