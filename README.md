@@ -1,7 +1,7 @@
 # go-smartmontools
 
 A Go port of [smartmontools](https://www.smartmontools.org/) scoped to
-`smartctl --all` — reading and printing all SMART information from storage
+`gosmart --all` — reading and printing all SMART information from storage
 devices. Supports ATA/SATA and NVMe drives on Linux.
 
 ## Features
@@ -9,7 +9,7 @@ devices. Supports ATA/SATA and NVMe drives on Linux.
 - ATA/SATA drives: IDENTIFY DEVICE, SMART health status, attributes with
   thresholds, error log, self-test log, selective self-test log
 - NVMe drives: Identify Controller, SMART/Health log, error information log
-- Output compatible with the original `smartctl --all` format
+- Output compatible with the original `gosmart --all` format
 - Single static binary, no runtime dependencies
 
 ## Requirements
@@ -21,7 +21,7 @@ devices. Supports ATA/SATA and NVMe drives on Linux.
 ## Installation
 
 ```sh
-go install github.com/okumura-pico/go-smartmontools/cmd/smartctl@latest
+go install github.com/okumura-pico/go-smartmontools/cmd/gosmart@latest
 ```
 
 Or build from source:
@@ -29,20 +29,20 @@ Or build from source:
 ```sh
 git clone https://github.com/okumura-pico/go-smartmontools.git
 cd go-smartmontools
-go build -o smartctl ./cmd/smartctl
+go build -o gosmart ./cmd/gosmart
 ```
 
 ## Usage
 
 ```
-smartctl -a <device>
-smartctl --all <device>
+gosmart -a <device>
+gosmart --all <device>
 ```
 
 ### ATA/SATA drive
 
 ```sh
-sudo smartctl -a /dev/sda
+sudo gosmart -a /dev/sda
 ```
 
 Example output:
@@ -89,7 +89,7 @@ SMART Selective self-test log data structure revision number 1
 ### NVMe drive
 
 ```sh
-sudo smartctl -a /dev/nvme0
+sudo gosmart -a /dev/nvme0
 ```
 
 Example output:
@@ -126,12 +126,12 @@ No Errors Logged
 ## Project structure
 
 ```
-cmd/smartctl/        CLI entry point
+cmd/gosmart/        CLI entry point
 internal/
   ata/               ATA data structures, SMART parsing, attribute names
   nvme/              NVMe data structures and log parsing
   device/            Device interface + Linux ioctl implementation
-  printer/           smartctl-compatible text output
+  printer/           gosmart-compatible text output
 ```
 
 ## License

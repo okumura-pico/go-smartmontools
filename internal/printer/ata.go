@@ -8,7 +8,7 @@ import (
 	"github.com/okumura-pico/go-smartmontools/internal/ata"
 )
 
-const version = "go-smartmontools 0.1"
+const version = "gosmart 0.1"
 
 // PrintATAAll writes the equivalent of "smartctl --all" output for an ATA device to w.
 func PrintATAAll(w io.Writer, path string, id *ata.IdentifyInfo, sv *ata.SmartValues,

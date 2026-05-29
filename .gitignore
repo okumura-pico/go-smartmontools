@@ -1,6 +1,6 @@
 # Go binaries
-/smartctl
-cmd/smartctl/smartctl
+/gosmart
+cmd/gosmart/gosmart
 
 # Go build and test artifacts
 *.test

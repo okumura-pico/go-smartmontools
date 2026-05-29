@@ -1,4 +1,4 @@
-// Command smartctl reads and prints SMART information from storage devices.
+// Command gosmart reads and prints SMART information from storage devices.
 // Only the --all (-a) mode is implemented.
 package main
 
@@ -32,7 +32,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: smartctl -a <device>\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: gosmart -a <device>\n\n")
 	fmt.Fprintf(os.Stderr, "Options:\n")
 	fmt.Fprintf(os.Stderr, "  -a, --all    Show all SMART information\n")
 }
