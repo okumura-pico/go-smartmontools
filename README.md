@@ -15,13 +15,7 @@ Supports ATA/SATA and NVMe drives on Linux and Windows.
 
 ## Installation
 
-Download a pre-built binary from the [Releases](https://github.com/okumura-pico/go-smartmontools/releases) page, or build from source:
-
-```sh
-git clone https://github.com/okumura-pico/go-smartmontools.git
-cd go-smartmontools
-go build -o gosmart ./cmd/gosmart
-```
+Download a pre-built binary from the [Releases](https://github.com/okumura-pico/go-smartmontools/releases) page.
 
 ## Usage
 
@@ -120,26 +114,9 @@ Error Information (NVMe Log 0x01, 16 of the most recent entries)
 No Errors Logged
 ```
 
-## Releasing
+## Development
 
-Push a `vX.Y.Z` tag to trigger the GitHub Actions release workflow, which
-builds Linux and Windows amd64 binaries and publishes them to GitHub Releases:
-
-```sh
-git tag v1.0.0
-git push origin main --tags
-```
-
-## Project structure
-
-```
-cmd/gosmart/        CLI entry point
-internal/
-  ata/               ATA data structures, SMART parsing, attribute names
-  nvme/              NVMe data structures and log parsing
-  device/            Device interface + Linux/Windows ioctl implementation
-  printer/           smartctl-compatible text output
-```
+See [DEVELOPMENT.md](DEVELOPMENT.md) for build instructions, architecture overview, and release process.
 
 ## License
 
