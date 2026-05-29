@@ -1,5 +1,4 @@
 // Command gosmart reads and prints SMART information from storage devices.
-// Only the --all (-a) mode is implemented.
 package main
 
 import (
@@ -18,16 +17,13 @@ import (
 const exitTimeout = 2
 
 func main() {
-	all := flag.Bool("a", false, "Show all SMART information")
-	flag.BoolVar(all, "all", false, "Show all SMART information (long form)")
-
 	timeoutSec := flag.Int("t", 5, "Timeout in seconds (0 = no limit)")
 	flag.IntVar(timeoutSec, "timeout", 5, "Timeout in seconds (0 = no limit)")
 
 	flag.Usage = usage
 	flag.Parse()
 
-	if !*all || flag.NArg() != 1 {
+	if flag.NArg() != 1 {
 		usage()
 		os.Exit(1)
 	}
@@ -68,9 +64,8 @@ func runWithTimeout(path string, timeoutSec int) int {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: gosmart [options] -a <device>\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: gosmart [options] <device>\n\n")
 	fmt.Fprintf(os.Stderr, "Options:\n")
-	fmt.Fprintf(os.Stderr, "  -a, --all              Show all SMART information\n")
 	fmt.Fprintf(os.Stderr, "  -t, --timeout <secs>   Timeout in seconds (default 5, 0 = no limit)\n")
 }
 
