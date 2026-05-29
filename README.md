@@ -1,30 +1,21 @@
 # go-smartmontools
 
 A Go port of [smartmontools](https://www.smartmontools.org/) scoped to
-`gosmart --all` — reading and printing all SMART information from storage
-devices. Supports ATA/SATA and NVMe drives on Linux.
+reading and printing all SMART information from storage devices.
+Supports ATA/SATA and NVMe drives on Linux and Windows.
 
 ## Features
 
 - ATA/SATA drives: IDENTIFY DEVICE, SMART health status, attributes with
   thresholds, error log, self-test log, selective self-test log
 - NVMe drives: Identify Controller, SMART/Health log, error information log
-- Output compatible with the original `gosmart --all` format
+- Output compatible with `smartctl --all` format
 - Single static binary, no runtime dependencies
-
-## Requirements
-
-- Linux (uses `HDIO_DRIVE_CMD` for ATA, `NVME_IOCTL_ADMIN_CMD` for NVMe)
-- Root privileges to access `/dev/sd*` or `/dev/nvme*`
-- Go 1.22 or later to build
+- Linux and Windows support
 
 ## Installation
 
-```sh
-go install github.com/okumura-pico/go-smartmontools/cmd/gosmart@latest
-```
-
-Or build from source:
+Download a pre-built binary from the [Releases](https://github.com/okumura-pico/go-smartmontools/releases) page, or build from source:
 
 ```sh
 git clone https://github.com/okumura-pico/go-smartmontools.git
@@ -35,20 +26,38 @@ go build -o gosmart ./cmd/gosmart
 ## Usage
 
 ```
-gosmart -a <device>
-gosmart --all <device>
+gosmart [options] <device>
+
+Options:
+  -t, --timeout <secs>   Timeout in seconds (default 5, 0 = no limit)
 ```
 
-### ATA/SATA drive
+### Linux
 
 ```sh
-sudo gosmart -a /dev/sda
+# ATA/SATA
+sudo gosmart /dev/sda
+
+# NVMe
+sudo gosmart /dev/nvme0
+
+# Disable timeout (e.g. slow/old drive)
+sudo gosmart -t 0 /dev/sda
 ```
 
-Example output:
+### Windows (run as Administrator)
+
+```powershell
+# ATA/SATA or NVMe — PhysicalDrive number from Disk Management
+gosmart \\.\PhysicalDrive0
+```
+
+## Example output
+
+### ATA/SATA
 
 ```
-go-smartmontools 0.1
+gosmart v1.0.0
 Copyright (C) 2002-26, smartmontools contributors
 
 === START OF INFORMATION SECTION ===
@@ -63,9 +72,6 @@ SMART support is: Enabled
 
 === START OF READ SMART DATA SECTION ===
 SMART overall-health self-assessment test result: PASSED
-
-General SMART Values:
-...
 
 SMART Attributes Data Structure revision number: 1
 Vendor Specific SMART Attributes with Thresholds:
@@ -83,19 +89,12 @@ No self-tests have been logged.
 SMART Selective self-test log data structure revision number 1
  SPAN  MIN_LBA  MAX_LBA  CURRENT_TEST_STATUS
     1        0        0  Not_testing
-...
 ```
 
-### NVMe drive
-
-```sh
-sudo gosmart -a /dev/nvme0
-```
-
-Example output:
+### NVMe
 
 ```
-go-smartmontools 0.1
+gosmart v1.0.0
 Copyright (C) 2002-26, smartmontools contributors
 
 === START OF INFORMATION SECTION ===
@@ -114,13 +113,21 @@ Temperature:                        38 Celsius
 Available Spare:                    100%
 Available Spare Threshold:          10%
 Percentage Used:                    0%
-Data Units Read:                    ...
-Data Units Written:                 ...
 Power On Hours:                     100
 ...
 
 Error Information (NVMe Log 0x01, 16 of the most recent entries)
 No Errors Logged
+```
+
+## Releasing
+
+Push a `vX.Y.Z` tag to trigger the GitHub Actions release workflow, which
+builds Linux and Windows amd64 binaries and publishes them to GitHub Releases:
+
+```sh
+git tag v1.0.0
+git push origin main --tags
 ```
 
 ## Project structure
@@ -130,8 +137,8 @@ cmd/gosmart/        CLI entry point
 internal/
   ata/               ATA data structures, SMART parsing, attribute names
   nvme/              NVMe data structures and log parsing
-  device/            Device interface + Linux ioctl implementation
-  printer/           gosmart-compatible text output
+  device/            Device interface + Linux/Windows ioctl implementation
+  printer/           smartctl-compatible text output
 ```
 
 ## License
