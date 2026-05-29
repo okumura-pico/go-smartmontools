@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/okumura-pico/go-smartmontools/internal/ata"
 	"github.com/okumura-pico/go-smartmontools/internal/device"
@@ -13,9 +14,16 @@ import (
 	"github.com/okumura-pico/go-smartmontools/internal/printer"
 )
 
+// exitTimeout is the exit code used when the command times out.
+const exitTimeout = 2
+
 func main() {
 	all := flag.Bool("a", false, "Show all SMART information")
 	flag.BoolVar(all, "all", false, "Show all SMART information (long form)")
+
+	timeoutSec := flag.Int("t", 5, "Timeout in seconds (0 = no limit)")
+	flag.IntVar(timeoutSec, "timeout", 5, "Timeout in seconds (0 = no limit)")
+
 	flag.Usage = usage
 	flag.Parse()
 
@@ -25,16 +33,45 @@ func main() {
 	}
 
 	path := flag.Arg(0)
-	if err := run(path); err != nil {
-		fmt.Fprintf(os.Stderr, "gosmart: %v\n", err)
-		os.Exit(1)
+	os.Exit(runWithTimeout(path, *timeoutSec))
+}
+
+// runWithTimeout runs run() in a goroutine and enforces timeoutSec.
+// Returns the appropriate exit code (0 = OK, 1 = error, exitTimeout = timed out).
+//
+// ioctl calls cannot be interrupted mid-flight, so on timeout we exit the
+// process immediately; the OS will reclaim the blocked goroutine.
+func runWithTimeout(path string, timeoutSec int) int {
+	errCh := make(chan error, 1)
+	go func() { errCh <- run(path) }()
+
+	if timeoutSec == 0 {
+		// No timeout: wait indefinitely.
+		if err := <-errCh; err != nil {
+			fmt.Fprintf(os.Stderr, "gosmart: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+
+	select {
+	case err := <-errCh:
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "gosmart: %v\n", err)
+			return 1
+		}
+		return 0
+	case <-time.After(time.Duration(timeoutSec) * time.Second):
+		fmt.Fprintf(os.Stderr, "gosmart: timeout after %ds — device not responding\n", timeoutSec)
+		return exitTimeout
 	}
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: gosmart -a <device>\n\n")
+	fmt.Fprintf(os.Stderr, "Usage: gosmart [options] -a <device>\n\n")
 	fmt.Fprintf(os.Stderr, "Options:\n")
-	fmt.Fprintf(os.Stderr, "  -a, --all    Show all SMART information\n")
+	fmt.Fprintf(os.Stderr, "  -a, --all              Show all SMART information\n")
+	fmt.Fprintf(os.Stderr, "  -t, --timeout <secs>   Timeout in seconds (default 5, 0 = no limit)\n")
 }
 
 func run(path string) error {
